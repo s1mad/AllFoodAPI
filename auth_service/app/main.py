@@ -1,9 +1,7 @@
 from fastapi import FastAPI
-from app.api.database.database import metadata, engine, database
-from app.api.router.router import router
 
-# Создаём таблицы при старте
-metadata.create_all(engine)
+from app.api.database.database import database
+from app.api.router.router import router
 
 # Инициализация FastAPI приложения
 app = FastAPI(docs_url="/")

@@ -1,12 +1,10 @@
 from datetime import datetime, timedelta
-import jwt
 from typing import Optional
-from app.api.model.user import UserInDB
+import jwt
 
-SECRET_KEY = "secret_key"
+SECRET_KEY = "your_secret_key"  # Убедитесь, что ключ одинаков везде
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
 
 # Генерация JWT токена
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -24,6 +22,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 def verify_token(token: str):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        return payload  # payload содержит декодированные данные токена
     except jwt.PyJWTError:
         return None

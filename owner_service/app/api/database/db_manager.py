@@ -9,12 +9,11 @@ DATABASE_URL = 'sqlite:///./all_food_db.sqlite'
 database = Database(DATABASE_URL)
 
 
-# Получаем все рестораны
-async def get_all_restaurants():
-    query = select(restaurants)
-    result = await database.fetch_all(query)
-    # Возвращаем данные в формате Pydantic, создавая объекты RestaurantOut
-    return [RestaurantOut(**row) for row in result]
+# Получаем все рестораны пользователя
+async def get_restaurants_by_user(user_id: int):
+    query = "SELECT * FROM restaurants WHERE owner_id = :owner_id"
+    result = await database.fetch_all(query, values={"owner_id": user_id})
+    return result
 
 
 # Получаем ресторан по ID

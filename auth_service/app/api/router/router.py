@@ -1,37 +1,22 @@
-from datetime import datetime, timedelta
+from fastapi import APIRouter, HTTPException, status
+import bcrypt
 from typing import List
 
-import bcrypt
-import jwt
-from fastapi import APIRouter, HTTPException, status
-from sqlalchemy.future import select
-
+from app.api.database.db_manager import hash_password
+from app.api.utils.jwt import create_access_token, verify_token
 from app.api.database.database import users, database
 from app.api.model.user import UserCreate, UserResponse
+from sqlalchemy.future import select
+from pydantic import BaseModel
 
 router = APIRouter()
 
-# Секрет для JWT токенов
-SECRET_KEY = "your_secret_key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class User(BaseModel):
+    id: str  # Используем строку для id
+    phone_number: str  # Заменяем на phone_number
+    is_owner: bool
 
 
-# Хэширование пароля
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-
-# Создание JWT токена
-def create_access_token(data: dict, expires_delta: timedelta = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
 
 
 # Регистрация нового пользователя
@@ -46,10 +31,10 @@ async def register_user(user: UserCreate):
     query = users.insert().values(
         phone_number=user.phone_number,
         password_hash=hashed_password,
-        is_owner=user.is_owner
+        is_owner=False  # Setting is_owner to False by default
     )
-    await database.execute(query)
-    return UserResponse(id=1, phone_number=user.phone_number, is_owner=user.is_owner)
+    user_id = await database.execute(query)
+    return UserResponse(id=user_id, phone_number=user.phone_number, is_owner=False)
 
 
 # Авторизация пользователя и получение JWT токена
@@ -60,7 +45,14 @@ async def login_user(user: UserCreate):
     if db_user is None or not bcrypt.checkpw(user.password.encode('utf-8'), db_user['password_hash'].encode('utf-8')):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    access_token = create_access_token(data={"sub": user.phone_number})
+    # Создание JWT токена
+    user_data = {
+        "sub": db_user['phone_number'],  # Можно использовать поле phone_number как уникальный идентификатор
+        "username": db_user['phone_number'],  # Можно заменить на db_user['username'], если оно есть
+        "is_owner": db_user['is_owner']
+    }
+
+    access_token = create_access_token(data=user_data)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -70,3 +62,18 @@ async def get_all_users():
     query = select(users)
     result = await database.fetch_all(query)
     return [UserResponse(**row) for row in result]
+
+
+# Эндпоинт для получения пользователя по токену
+@router.get("/user", response_model=User)
+async def get_user(token: str):
+    user_data = verify_token(token)
+    if not user_data:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+
+    # Получаем id и phone_number из токена
+    user_id = user_data['sub']  # ID будет в sub, который теперь можно использовать как phone_number
+    phone_number = user_data['sub']  # Если sub — это телефон, используем его как phone_number
+
+    return User(id=user_id, phone_number=phone_number, is_owner=user_data['is_owner'])
+

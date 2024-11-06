@@ -1,6 +1,9 @@
 import os
 from databases import Database
 from sqlalchemy import Column, Integer, String, Table, MetaData, Boolean, create_engine
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 
@@ -19,3 +22,4 @@ users = Table(
 
 # Создаём асинхронное подключение
 database = Database(DATABASE_URL)
+metadata.create_all(engine)

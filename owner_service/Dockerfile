@@ -17,7 +17,7 @@ COPY . .
 EXPOSE 8000
 
 # Устанавливаем переменные окружения для SQLite
-ENV DATABASE_URL=sqlite:///./your_database_name.sqlite
+ENV DATABASE_URL=sqlite:///./all_food_db.sqlite
 
 # Запускаем приложение
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
