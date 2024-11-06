@@ -2,9 +2,10 @@ from datetime import datetime, timedelta
 from typing import Optional
 import jwt
 
-SECRET_KEY = "your_secret_key"  # Убедитесь, что ключ одинаков везде
+SECRET_KEY = "SECRET_KEY"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 # Генерация JWT токена
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
