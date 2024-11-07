@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 
-from app.api.database.database import metadata, engine, database
+from app.api.database.database import database
 from app.api.router.router import router
 
-metadata.create_all(engine)
-
-app = FastAPI(docs_url="/")
+app = FastAPI(openapi_url="/api/v1/owner/openapi.json", docs_url="/api/v1/owner/docs")
 
 
 @app.on_event("startup")

@@ -33,3 +33,4 @@ dishes = Table(
 
 # Создаём асинхронное подключение
 database = Database(DATABASE_URL)
+metadata.create_all(engine)

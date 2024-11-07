@@ -10,7 +10,6 @@ class DishIn(BaseModel):
 
 class DishOut(DishIn):
     id: int
-    restaurant_id: int
 
 
 class DishUpdate(BaseModel):

@@ -4,7 +4,7 @@ from app.api.database.database import database
 from app.api.router.router import router
 
 # Инициализация FastAPI приложения
-app = FastAPI(docs_url="/")
+app = FastAPI(openapi_url="/api/v1/auth/openapi.json", docs_url="/api/v1/auth/docs")
 
 
 @app.on_event("startup")

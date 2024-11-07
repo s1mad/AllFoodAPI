@@ -14,6 +14,6 @@ class RestaurantOut(RestaurantIn):
 
 
 # Модель для обновления информации о ресторане
-class RestaurantUpdate(RestaurantIn):
+class RestaurantUpdate(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None

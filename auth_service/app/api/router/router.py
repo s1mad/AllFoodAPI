@@ -1,4 +1,3 @@
-import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy.future import select
 

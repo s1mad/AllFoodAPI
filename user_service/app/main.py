@@ -1,12 +1,10 @@
 from fastapi import FastAPI
-from app.api.database.database import metadata, engine, database
+
+from app.api.database.database import database
 from app.api.router.router import router
 
-# Создаём таблицы при старте
-metadata.create_all(engine)
-
 # Инициализация FastAPI приложения
-app = FastAPI(docs_url="/")
+app = FastAPI(openapi_url="/api/v1/user/openapi.json", docs_url="/api/v1/user/docs")
 
 
 @app.on_event("startup")

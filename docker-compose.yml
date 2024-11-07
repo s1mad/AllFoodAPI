@@ -1,4 +1,15 @@
 services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx_config.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - auth_service
+      - user_service
+      - owner_service
+
   user_service:
     build:
       context: ./user_service  # Путь к папке с микросервисом
