@@ -17,11 +17,14 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=sqlite:////app/all_food_db.sqlite
+      - RABBIT_HOST=rabbitmq
     volumes:
       - ./user_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
       - .env
+    depends_on:
+      - rabbitmq
 
   auth_service:
     build:
@@ -30,11 +33,14 @@ services:
       - "8001:8000"
     environment:
       - DATABASE_URL=sqlite:////app/all_food_db.sqlite
+      - RABBIT_HOST=rabbitmq
     volumes:
       - ./auth_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
       - .env
+    depends_on:
+      - rabbitmq
 
   owner_service:
     build:
@@ -43,8 +49,20 @@ services:
       - "8002:8000"
     environment:
       - DATABASE_URL=sqlite:////app/all_food_db.sqlite
+      - RABBIT_HOST=rabbitmq
     volumes:
       - ./owner_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
       - .env
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=pass
