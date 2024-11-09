@@ -17,10 +17,7 @@ async def get_restaurants():
 
 @router.get('/restaurants/{restaurant_id}/dishes', response_model=List[Dish])
 async def get_dishes_by_restaurant_id(restaurant_id: int):
-    dishes = await get_dishes_by_restaurant(restaurant_id)
-    if not dishes:
-        raise HTTPException(status_code=404, detail="Dishes not found for this restaurant")
-    return dishes
+    return await get_dishes_by_restaurant(restaurant_id)
 
 
 @router.post('/order', response_model=dict)

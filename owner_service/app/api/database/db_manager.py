@@ -3,14 +3,14 @@ from sqlalchemy import select
 
 from app.api.database.database import restaurants, database, dishes
 from app.api.model.dish import DishOut, DishIn, DishUpdate
-from app.api.model.restaurant import RestaurantIn, RestaurantOut, RestaurantUpdate
+from app.api.model.restaurant import RestaurantIn, RestaurantOut, RestaurantUpdate, Restaurant
 
 
 # Получаем все рестораны пользователя
 async def get_restaurants_by_user(user_id: int):
     query = select(restaurants).where(user_id == restaurants.c.user_id)
     result = await database.fetch_all(query)
-    return result
+    return [Restaurant(**row) for row in result]
 
 
 # Получаем ресторан по ID
@@ -19,6 +19,17 @@ async def get_restaurant(id: int):
     result = await database.fetch_one(query)
     if result: return RestaurantOut(**result)
     return None
+
+
+# Определяем, является ли пользователь владельцем ресторана
+async def user_is_own_restaurant(user_id: int, restaurant_id: int) -> bool:
+    query = select(restaurants).where(
+        (restaurants.c.id == restaurant_id) & (restaurants.c.user_id == user_id)
+    )
+
+    result = await database.fetch_one(query)
+
+    return result is not None
 
 
 # Добавляем новый ресторан
@@ -53,8 +64,12 @@ async def update_restaurant(id: int, payload: RestaurantUpdate):
 
 # Удаляем ресторан
 async def delete_restaurant(id: int):
+    delete_dishes_query = dishes.delete().where(dishes.c.restaurant_id == id)
+    await database.execute(delete_dishes_query)
+
     query = restaurants.delete().where(restaurants.c.id == id)
     await database.execute(query)
+
     return {"message": "Restaurant deleted successfully"}
 
 

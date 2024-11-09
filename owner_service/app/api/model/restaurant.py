@@ -2,6 +2,12 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+class Restaurant(BaseModel):
+    id: int
+    name: str
+    address: str
+
+
 # Модель для создания нового ресторана
 class RestaurantIn(BaseModel):
     name: str

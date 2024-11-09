@@ -1,81 +1,104 @@
-from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+
+from fastapi import APIRouter, HTTPException
+
 from app.api.database import db_manager
+from app.api.database.db_manager import get_restaurants_by_user, get_restaurant, user_is_own_restaurant, \
+    get_dishes_by_restaurant
 from app.api.model.dish import DishOut, DishIn, DishUpdate
-from app.api.model.restaurant import RestaurantOut, RestaurantIn, RestaurantUpdate
+from app.api.model.restaurant import RestaurantIn, RestaurantUpdate, Restaurant
 from app.api.util.get_current_user import get_current_user
 
 router = APIRouter()
 
 
-@router.get('/restaurants', response_model=List[RestaurantOut])
-async def index(token: str):
+@router.get('/restaurants', response_model=List[Restaurant])
+async def get_user_restaurants(token: str):
     current_user = await get_current_user(token)
-    if not current_user.is_owner:
-        raise HTTPException(status_code=403, detail="Not authorized to access this resource")
-    restaurants = await db_manager.get_restaurants_by_user(current_user.id)
-    return restaurants
+    if current_user.get("is_owner") is True:
+        return await get_restaurants_by_user(current_user["id"])
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.post('/restaurants', status_code=201, response_model=RestaurantOut)
+@router.post('/restaurant', status_code=201, response_model=Restaurant)
 async def add_restaurant(payload: RestaurantIn, token: str):
     current_user = await get_current_user(token)
-    if not current_user.is_owner:
-        raise HTTPException(status_code=403, detail="Not authorized to add a restaurant")
-    restaurant_id = await db_manager.add_restaurant(current_user.id, payload)
-    return {**payload.dict(), 'id': restaurant_id, 'user_id': current_user.id}
+    if current_user.get("is_owner") is True:
+        restaurant_id = await db_manager.add_restaurant(current_user["id"], payload)
+        restaurant = await get_restaurant(restaurant_id)
+        return restaurant
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.put('/restaurant/{id}', response_model=RestaurantOut)
+@router.put('/restaurant/{id}', response_model=Restaurant)
 async def update_restaurant(id: int, payload: RestaurantUpdate, token: str):
     current_user = await get_current_user(token)
-    restaurant = await db_manager.get_restaurant(id)
-    if not restaurant:
-        raise HTTPException(status_code=404, detail="Restaurant with given id not found")
-    if restaurant.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this restaurant")
-    updated_restaurant = await db_manager.update_restaurant(id, payload)
-    return updated_restaurant
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], id):
+            updated_restaurant = await db_manager.update_restaurant(id, payload)
+            return updated_restaurant
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.delete('/restaurants/{id}', response_model=RestaurantOut)
+@router.delete('/restaurant/{id}')
 async def delete_restaurant(id: int, token: str):
     current_user = await get_current_user(token)
-    restaurant = await db_manager.get_restaurant(id)
-    if not restaurant:
-        raise HTTPException(status_code=404, detail="Restaurant with given id not found")
-    if restaurant.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this restaurant")
-    await db_manager.delete_restaurant(id)
-    return restaurant
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], id):
+            await db_manager.delete_restaurant(id)
+            return {"detail": "Success delete"}
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.post('/restaurants/{restaurant_id}/dishes', response_model=DishOut)
+@router.get('/restaurant/{restaurant_id}/dish', response_model=List[DishOut])
+async def get_restaurant_dishes(restaurant_id: int, token: str):
+    current_user = await get_current_user(token)
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], restaurant_id):
+            return await get_dishes_by_restaurant(restaurant_id)
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
+
+
+@router.post('/restaurant/{restaurant_id}/dish', response_model=DishOut)
 async def add_dish(restaurant_id: int, payload: DishIn, token: str):
     current_user = await get_current_user(token)
-    restaurant = await db_manager.get_restaurant(restaurant_id)
-    if not restaurant or restaurant.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to add dish to this restaurant")
-    dish_id = await db_manager.add_dish(restaurant_id, payload)
-    return DishOut(**payload.dict(), id=dish_id, restaurant_id=restaurant_id)
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], restaurant_id):
+            dish_id = await db_manager.add_dish(restaurant_id, payload)
+            dish = await db_manager.get_dish(dish_id)
+            return dish
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.put('/dishes/{id}', response_model=DishOut)
-async def update_dish(id: int, payload: DishUpdate, token: str):
+@router.put('/restaurant/{restaurant_id}/dish/{dish_id}', response_model=DishOut)
+async def update_dish(restaurant_id: int, dish_id: int, token: str, payload: DishUpdate):
     current_user = await get_current_user(token)
-    dish = await db_manager.get_dish(id)
-    restaurant = await db_manager.get_restaurant(dish.restaurant_id)
-    if not restaurant or restaurant.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to update this dish")
-    return await db_manager.update_dish(id, payload)
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], restaurant_id):
+            updated_restaurant = await db_manager.update_dish(dish_id, payload)
+            return updated_restaurant
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")
 
 
-@router.delete('/dishes/{id}', response_model=DishOut)
-async def delete_dish(id: int, token: str):
+@router.delete('/restaurant/{restaurant_id}/dish/{dish_id}')
+async def delete_dish(restaurant_id: int, dish_id: int, token: str):
     current_user = await get_current_user(token)
-    dish = await db_manager.get_dish(id)
-    restaurant = await db_manager.get_restaurant(dish.restaurant_id)
-    if not restaurant or restaurant.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this dish")
-    await db_manager.delete_dish(id)
-    return dish
+
+    if current_user.get("is_owner") is True:
+        if await user_is_own_restaurant(current_user["id"], restaurant_id):
+            await db_manager.delete_dish(dish_id)
+            return {"detail": "Success delete"}
+
+    raise HTTPException(status_code=403, detail="Not authorized to access this resource")

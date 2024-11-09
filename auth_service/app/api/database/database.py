@@ -1,7 +1,8 @@
 import os
+
 from databases import Database
-from sqlalchemy import Column, Integer, String, Table, MetaData, Boolean, create_engine
 from dotenv import load_dotenv
+from sqlalchemy import Column, Integer, String, Table, MetaData, Boolean, create_engine
 
 load_dotenv()
 

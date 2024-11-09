@@ -12,16 +12,16 @@ services:
 
   user_service:
     build:
-      context: ./user_service  # Путь к папке с микросервисом
+      context: ./user_service
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=sqlite:////app/all_food_db.sqlite  # Путь к базе данных из корня
+      - DATABASE_URL=sqlite:////app/all_food_db.sqlite
     volumes:
-      - ./user_service:/app  # Монтируем код микросервиса в контейнер
-      - ./all_food_db.sqlite:/app/all_food_db.sqlite  # Монтируем базу данных из корня
+      - ./user_service:/app
+      - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
-      - .env  # Подключаем файл переменных окружения
+      - .env
 
   auth_service:
     build:
@@ -34,7 +34,7 @@ services:
       - ./auth_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
-      - .env  # Подключаем файл переменных окружения
+      - .env
 
   owner_service:
     build:
@@ -47,4 +47,4 @@ services:
       - ./owner_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite
     env_file:
-      - .env  # Подключаем файл переменных окружения
+      - .env

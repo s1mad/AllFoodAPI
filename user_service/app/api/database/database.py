@@ -1,7 +1,8 @@
 import os
+
 from databases import Database
-from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, ForeignKey, Float, Boolean
 from dotenv import load_dotenv
+from sqlalchemy import Column, Integer, MetaData, String, Table, create_engine, ForeignKey, Float
 
 load_dotenv()
 
