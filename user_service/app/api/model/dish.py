@@ -7,4 +7,3 @@ class Dish(BaseModel):
     name: str
     price: float
     ingredients: str
-    category: str

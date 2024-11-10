@@ -50,6 +50,10 @@ services:
     environment:
       - DATABASE_URL=sqlite:////app/all_food_db.sqlite
       - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - RABBIT_USER=user
+      - RABBIT_PASSWORD=pass
+      - ORDER_QUEUE=order_queue
     volumes:
       - ./owner_service:/app
       - ./all_food_db.sqlite:/app/all_food_db.sqlite

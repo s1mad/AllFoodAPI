@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+# Модель для создания вывода ресторана
 class Restaurant(BaseModel):
     id: int
     name: str
